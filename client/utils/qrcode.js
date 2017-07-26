@@ -1,5 +1,3 @@
-import QrCode from 'qrcode-reader';
-
 /**
  * Convert QRcode data into a grocery item
  * 
@@ -78,21 +76,36 @@ export function fileToImageBuffer(file) {
  * @return {Promise}
  */
 export function onQrCodeScan(imageBuffer, cartStore) {
-  return new Promise((resolve/*, reject*/) => {
-
+  return new Promise((resolve, reject) => {
+    
     // BEGIN MAIN THREAD SOLUTION
-    let qr = new QrCode();
-    qr.callback = function(error, rawResult) {
-      if(error) {
-        self.postMessage({ error });
-        return;
-      }
-      let result = qrCodeStringToObject(rawResult.result);
-      resolve(result);
-    }
-    qr.decode(imageBuffer);
+    // let qr = new QrCode();
+    // qr.callback = function(error, rawResult) {
+    //   if(error) {
+    //     self.postMessage({ error });
+    //     return;
+    //   }
+    //   let result = qrCodeStringToObject(rawResult.result);
+    //   resolve(result);
+    // }
+    // qr.decode(imageBuffer);
     // END MAIN THREAD SOLUTION
     
+    let wrk = new Worker('qrwork.js');
+    wrk.postMessage({ imageBuffer });
+    let timeLimit = 25000; // 25 sec
+    wrk.onmessage = (evt) => {
+      if (evt.data && evt.data.qrData) {
+        let { qrData } = evt.data;
+        console.log(qrData);
+        wrk.terminate();
+        resolve(qrData);
+      }
+    }
+    setTimeout(() => {
+      wrk.terminate();
+      reject('QR decode took too long!');
+    }, timeLimit);
   }).then((qrData) => {
     cartStore.addItemToCart(qrData);
   });
