@@ -29,11 +29,16 @@ class CategoryRow extends Component {
     this.props.groceryItemStore.itemListeners.unregister(this._itemUpdateListener);
   }
 
+  shouldComponentUpdate(newProps, newState) {
+    if (this.state.groceryItems.length === newState.groceryItems.length) return false;
+    return true;
+  }
+
   render() {
     let itemComponents = this.state.groceryItems.map((item) => (
       <GroceryItem
         cartStore={this.props.cartStore}
-        key={item.id}
+        key={parseInt(item.id, 10)}
         item={item}/>
     ));
     return (
