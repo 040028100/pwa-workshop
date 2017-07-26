@@ -25,6 +25,7 @@ import OrderStore from './data/order-store';
 import { onQrCodeScan } from './utils/qrcode';
 
 import 'worker-loader?name=qrwork.js!./qrwork.js';
+import 'worker-loader?name=service-worker.js!./service-worker.js';
 
 class App extends Component {
   constructor(props) {
@@ -130,6 +131,19 @@ class App extends Component {
       </Router>
     );
   }
+}
+
+if ('serviceWorker' in navigator) {
+  // Okay, the browser supports service workers.
+  navigator.serviceWorker.register('service-worker.js')
+    .then(registration => {
+    // The service worker is registered.
+    })
+    .catch(err => {
+    // No dice.
+    });
+} else {
+  // Service worker is not a thing, apparently.
 }
 
 export default App;
