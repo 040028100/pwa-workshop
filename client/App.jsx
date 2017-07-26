@@ -136,14 +136,17 @@ class App extends Component {
 if ('serviceWorker' in navigator) {
   // Okay, the browser supports service workers.
   navigator.serviceWorker.register('service-worker.js')
-    .then(registration => {
-    // The service worker is registered.
+    .then((registration) => {
+      // The service worker is registered.
+      console.log('Service worker is registered', registration);
     })
-    .catch(err => {
-    // No dice.
+    .catch((err) => {
+      // No dice.
+      console.error('Error while attempting to register service worker', err);
     });
 } else {
   // Service worker is not a thing, apparently.
+  console.info('Service worker is not supported');
 }
 
 export default App;
