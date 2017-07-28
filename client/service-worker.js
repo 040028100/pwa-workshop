@@ -6,6 +6,9 @@ import {
 
 const FALLBACK_IMAGE_URL = 'https://localhost:3100/images/fallback-grocery.png';
 
+const INDEX_HTML_PATH = '/';
+const INDEX_HTML_URL = new URL(INDEX_HTML_PATH, self.location).toString();
+
 self.addEventListener('install', event => {
   // Do the stuff needed at install time.
   // This may not be the active service worker yet.
@@ -44,7 +47,10 @@ self.addEventListener('fetch', event => {
   let requestUrl = new URL(event.request.url);
 
   let isApiCall = requestUrl.origin === 'https://localhost:3100';
-
+  let isLocal = new URL(event.request.url).origin === location.origin;
+  let isGETRequest = event.request.method === 'GET';
+  let isHTMLRequest = event.request.headers.get('accept').indexOf('text/html') !== -1;
+  
   event.respondWith(
     caches.match(event.request, {cacheName: ALL_CACHES.prefetch})
       .then((resp) => {
@@ -61,8 +67,8 @@ self.addEventListener('fetch', event => {
             // disconnected?
             if (isApiCall) {
               return caches.match(event.request, { cacheName: ALL_CACHES.fallback });
-            } else {
-              return fetch(event.request);
+            } else if (isGETRequest && isHTMLRequest && isLocal) {
+              return fetch(event.request).catch(() => caches.match(INDEX_HTML_URL));
             }
           });
       })
