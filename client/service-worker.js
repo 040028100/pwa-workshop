@@ -43,10 +43,28 @@ self.addEventListener('fetch', event => {
   // Build a URL object from the request's url string
   let requestUrl = new URL(event.request.url);
 
+  let isApiCall = requestUrl.origin === 'https://localhost:3100';
+
   event.respondWith(
     caches.match(event.request, {cacheName: ALL_CACHES.prefetch})
       .then((resp) => {
-        return resp || fetch(event.request);
+        if (resp) return resp; // Precache worked!
+        return fetch(event.request)
+          .then((resp) => {
+            if (isApiCall)
+              caches.open(ALL_CACHES.fallback).then((fallbackCache) => {
+                fallbackCache.add(event.request.url);
+              });
+            return resp;
+          })
+          .catch(() => {
+            // disconnected?
+            if (isApiCall) {
+              return caches.match(event.request, { cacheName: ALL_CACHES.fallback });
+            } else {
+              return fetch(event.request);
+            }
+          });
       })
       .catch(() => {
         console.log('NOT responeded to ' + event.request.url + ' from cache');
